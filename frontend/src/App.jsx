@@ -155,12 +155,12 @@ export default function App() {
   const sc = surfaceConfig[surface] || surfaceConfig.Clay
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/players")
+    fetch("https://atp-match-predictor-production.up.railway.app/players")
       .then(r => r.json())
       .then(setPlayers)
       .catch(() => {})
 
-    fetch("http://127.0.0.1:8000/tournaments")
+    fetch("https://atp-match-predictor-production.up.railway.app/tournaments")
       .then(r => r.json())
       .then(setTournaments)
       .catch(() => {})
@@ -171,7 +171,7 @@ export default function App() {
     setError(null)
     setResult(null)
     try {
-      const res = await fetch("http://127.0.0.1:8000/predict", {
+      const res = await fetch("https://atp-match-predictor-production.up.railway.app/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
