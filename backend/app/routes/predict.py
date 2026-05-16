@@ -17,6 +17,38 @@ class PredictRequest(BaseModel):
     tourney_name: str
     round: str
 
+@router.get("/players")
+def get_players():
+    from sqlalchemy import create_engine, text
+    from dotenv import load_dotenv
+    import os
+    load_dotenv()
+    engine = create_engine(os.getenv("DATABASE_URL"))
+    query = text("""
+        SELECT DISTINCT winner_name as name FROM matches
+        UNION
+        SELECT DISTINCT loser_name as name FROM matches
+        ORDER BY name
+    """)
+    with engine.connect() as conn:
+        results = conn.execute(query).fetchall()
+    return [r.name for r in results if r.name]
+
+@router.get("/tournaments")
+def get_tournaments():
+    from sqlalchemy import create_engine, text
+    from dotenv import load_dotenv
+    import os
+    load_dotenv()
+    engine = create_engine(os.getenv("DATABASE_URL"))
+    query = text("""
+        SELECT DISTINCT tourney_name as name FROM matches
+        ORDER BY name
+    """)
+    with engine.connect() as conn:
+        results = conn.execute(query).fetchall()
+    return [r.name for r in results if r.name]
+
 @router.post("/predict")
 def predict(request: PredictRequest):
     features = compute_features(

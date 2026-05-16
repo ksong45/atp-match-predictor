@@ -37,7 +37,7 @@ def compute_elo(df, k=32, base=1500):
         elo[winner] = w_elo + k * (1 - w_exp)
         elo[loser] = l_elo + k * (0 - l_exp)
 
-    return pd.DataFrame(elo_before_match)
+    return pd.DataFrame(elo_before_match), elo
 
 def get_training_data():
     query = text("""
@@ -216,7 +216,7 @@ def engineer_features(df, elo_df):
 
 def train_model():
     df = get_training_data()
-    elo_df = compute_elo(df)
+    elo_df, elo = compute_elo(df)
     features_df = engineer_features(df, elo_df)
 
     X = features_df.drop('label', axis=1)
@@ -244,6 +244,15 @@ def train_model():
     os.makedirs("backend/models", exist_ok=True)
     joblib.dump(model, "backend/models/match_predictor.pkl")
     print("Model saved to backend/models/match_predictor.pkl")
+
+    # Save final Elo ratings to database
+    print("Saving Elo ratings to database...")
+    elo_records = pd.DataFrame([
+        {"player_name": player, "elo": rating}
+        for player, rating in elo.items()
+    ])
+    elo_records.to_sql("player_elo", engine, if_exists="replace", index=False)
+    print(f"Saved Elo ratings for {len(elo_records)} players")
 
     importance = pd.Series(
         model.feature_importances_,

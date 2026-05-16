@@ -154,6 +154,38 @@ def get_current_rank(player_name):
 
     return result.rank if result else 999
 
+def get_player_elo(player_name):
+    """Get player's current Elo rating from database"""
+    query = text("""
+        SELECT elo FROM player_elo
+        WHERE LOWER(player_name) = LOWER(:player)
+        LIMIT 1
+    """)
+    with engine.connect() as conn:
+        result = conn.execute(query, {"player": player_name}).fetchone()
+    return float(result.elo) if result else 1500.0
+
+def get_player_age(player_name):
+    """Get player age from players table via DOB"""
+    query = text("""
+        SELECT dob FROM players
+        WHERE CONCAT(name_first, ' ', name_last) = :player
+        LIMIT 1
+    """)
+    with engine.connect() as conn:
+        result = conn.execute(query, {"player": player_name}).fetchone()
+    
+    if result and result.dob:
+        try:
+            from datetime import datetime
+            dob = str(result.dob)
+            birth = datetime.strptime(dob, "%Y%m%d")
+            age = (datetime.now() - birth).days / 365.25
+            return round(age, 1)
+        except:
+            return 25.0
+    return 25.0
+
 def compute_features(player1, player2, surface, tourney_name, round):
     print(f"Computing features for {player1} vs {player2} on {surface}...")
 
@@ -165,8 +197,8 @@ def compute_features(player1, player2, surface, tourney_name, round):
         "p1_surface_wr":  get_surface_win_rate(player1, surface),
         "p1_recent_form": get_recent_form(player1),
         "p1_rank":        p1_rank,
-        "p1_elo":         1500.0,  # default, not computed live
-        "p1_age":         25.0,    # default
+        "p1_elo":         get_player_elo(player1),
+        "p1_age":         get_player_age(player1),
         "p1_ace_rate":    0.0,
         "p1_1st_serve":   0.0,
         "p1_1st_won":     0.0,
@@ -175,8 +207,8 @@ def compute_features(player1, player2, surface, tourney_name, round):
         "p2_surface_wr":  get_surface_win_rate(player2, surface),
         "p2_recent_form": get_recent_form(player2),
         "p2_rank":        p2_rank,
-        "p2_elo":         1500.0,
-        "p2_age":         25.0,
+        "p2_elo":         get_player_elo(player2),
+        "p2_age":         get_player_age(player2),
         "p2_ace_rate":    0.0,
         "p2_1st_serve":   0.0,
         "p2_1st_won":     0.0,
@@ -185,7 +217,7 @@ def compute_features(player1, player2, surface, tourney_name, round):
         "h2h":            get_h2h(player1, player2, surface),
         # Differentials
         "rank_diff":      p2_rank - p1_rank,
-        "elo_diff":       0.0,
+        "elo_diff":       get_player_elo(player1) - get_player_elo(player2),
         "age_diff":       0.0,
         # Match context
         "surface_clay":   1 if surface == "Clay" else 0,

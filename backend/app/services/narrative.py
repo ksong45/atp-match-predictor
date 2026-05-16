@@ -24,6 +24,8 @@ Statistical breakdown:
 - {player2} recent form (last 15): {features['p2_recent_form']:.1%}
 - {player1} current ranking: #{int(features['p1_rank'])}
 - {player2} current ranking: #{int(features['p2_rank'])}
+- {player1} age: {features.get('p1_age', 'unknown')}
+- {player2} age: {features.get('p2_age', 'unknown')}
 - Head to head on {surface}: {player1} leads {features['h2h']:.0%} to {1-features['h2h']:.0%}
 - Predicted winner: {prediction['predicted_winner']} ({max(prediction['player1_win_probability'], prediction['player2_win_probability']):.0%} probability)
 
@@ -32,7 +34,7 @@ Write a 3-4 sentence match preview in the style of a seasoned ESPN analyst. Cove
 2. What each player needs to do to win
 3. Your prediction and why
 
-Be specific, confident, and engaging. Use the statistics to support your analysis."""
+Be specific, confident, and engaging. Use the statistics to support your analysis. Write in plain text only — no markdown, no asterisks, no bold formatting, no headers."""
 
     message = client.messages.create(
         model="claude-sonnet-4-5",
